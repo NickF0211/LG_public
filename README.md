@@ -1,5 +1,5 @@
 # LEGO-A
-# This is the anonymous repo for tool LEGO-A
+# This is the anonymous repo for tool LEGOs-A
 
 ### prerequisite:
 1. Python 3.5 and later
