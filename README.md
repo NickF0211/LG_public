@@ -8,10 +8,12 @@
 (only available on Linux OS). Please add memtime executable to the path.
 
 3. z3-solver with python binding:
-    `pip install z3-solver`
-
+    `pip install z3-solver` or 
+    `pip3 install z3-solver`
+    
 4. pysmt:
-    `pip install pysmt`
+    `pip install pysmt` or 
+    `pip3 install pysmt`
     
 
 
