@@ -1,4 +1,4 @@
-# LEGO-A
+# LEGOs-A
 # This is the anonymous repo for tool LEGOs-A
 
 ### prerequisite:
