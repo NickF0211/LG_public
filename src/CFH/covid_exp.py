@@ -86,27 +86,12 @@ def run_exp(command_header):
                 f.write(result.stdout)
                 f.write(result.stderr)
 
-            result_file = "results/covid_{}_rule_opt_{}_ub.txt".format(i, j)
-            print(result_file)
-            with open(result_file, 'w') as f:
-                try:
-                    result = subprocess.run(command_header + [rule_file, str(j), str(vol_bound), "t", "f", "f", "t"],
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE,
-                                            universal_newlines=True,
-                                            timeout=timeout)
-                except subprocess.TimeoutExpired as t:
-                    f.write("timeout {}".format(timeout))
-                    continue
-
-                f.write(result.stdout)
-                f.write(result.stderr)
 
             result_file = "results/covid_{}_rule_opt_{}_all.txt".format(i, j)
             print(result_file)
             with open(result_file, 'w') as f:
                 try:
-                    result = subprocess.run(command_header + [rule_file, str(j), str(vol_bound), "t", "t", "t", "t"],
+                    result = subprocess.run(command_header + [rule_file, str(j), str(vol_bound), "t", "t", "t"],
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE,
                                             universal_newlines=True,
@@ -188,27 +173,13 @@ def run_exp(command_header):
             f.write(result.stdout)
             f.write(result.stderr)
 
-        result_file = "results/covid_unbound_rule_opt_{}_ub.txt".format(str(j))
-        print(result_file)
-        with open(result_file, 'w') as f:
-            try:
-                result = subprocess.run(command_header + [rule_file, str(j), "10000", "t", "f", "f", "t"],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        universal_newlines=True,
-                                        timeout=timeout)
-            except subprocess.TimeoutExpired as t:
-                f.write("timeout {}".format(timeout))
-                continue
 
-            f.write(result.stdout)
-            f.write(result.stderr)
 
         result_file = "results/covid_unbound_rule_opt_{}_all.txt".format(str(j))
         print(result_file)
         with open(result_file, 'w') as f:
             try:
-                result = subprocess.run(command_header + [rule_file, str(j), "10000", "t", "t", "t", "t"],
+                result = subprocess.run(command_header + [rule_file, str(j), "10000", "t", "t", "t"],
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
@@ -221,6 +192,6 @@ def run_exp(command_header):
             f.write(result.stderr)
 
 if __name__ == "__main__":
-    command_header = ["/u/lmarsso/memtime/memtime","python3"]
+    command_header = ["../../memtime-master/memtime","python3"]
     run_exp(command_header)
 

@@ -29,7 +29,6 @@ balance = make_bin_predicate(_balance)
 
 # balance = _balance
 complete_rules = []
-add_background_theories(ACTION, state_action, complete_rules)
 TS = union(Trans, Depo, Withdraw)
 
 # every transication has a unqie tid
@@ -100,6 +99,7 @@ if __name__ == '__main__':
 
     rules = set()
     start = time.time()
-    check_property_refining(target_rule, complete_rules, complete_rules, ACTION, state_action, True, min_solution=True,
+    complete_rules = add_background_theories(ACTION, state_action, complete_rules, bcr)
+    check_property_refining(target_rule, set(complete_rules), complete_rules, ACTION, state_action, True, min_solution=True,
                             final_min_solution=True, restart=restart, boundary_case=bcr, universal_blocking=ub)
     print(time.time() - start)

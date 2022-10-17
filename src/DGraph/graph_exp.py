@@ -7,12 +7,12 @@ def run_exp(command_header):
         os.makedirs('results')
 
 
-    timeout = 10000
+    timeout = 5000
     rule_file  = "graph_rules.py"
-
-    for j in range(1, 12):
-
-        result_file = "results/graph_unbound_hour_rule_opt_{}.txt".format(j)
+    properties_remap = [1,2,3,4,5]
+    properties = [2, 3, 7, 8, 9]
+    for j, index in zip(properties, properties_remap):
+        result_file = "results/dg_{}.txt".format(index)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
@@ -29,7 +29,7 @@ def run_exp(command_header):
 
 
 
-        result_file = "results/graph_unbound_hour_rule_opt_{}_restart.txt".format(j)
+        result_file = "results/dg_{}_restart.txt".format(index)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
@@ -46,7 +46,7 @@ def run_exp(command_header):
 
 
 
-        result_file = "results/graph_unbound_hour_rule_opt_{}_bcr.txt".format(j)
+        result_file = "results/dg_{}_bcr.txt".format(index)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
@@ -62,30 +62,11 @@ def run_exp(command_header):
                 #continue
 
 
-
-        result_file = "results/graph_unbound_hour_rule_opt_{}_ub.txt".format(j)
+        result_file = "results/dg_{}_all.txt".format(index)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
-                result = subprocess.run(command_header + [rule_file, str(j), "f", "f", "t"],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        universal_newlines=True,
-                                        timeout=timeout)
-                f.write(result.stdout)
-                f.write(result.stderr)
-
-            except subprocess.TimeoutExpired as t:
-                f.write("timeout {}".format(timeout))
-                #continue
-
-
-
-        result_file = "results/graph_unbound_hour_rule_opt_{}_all.txt".format(j)
-        print(result_file)
-        with open(result_file, 'w') as f:
-            try:
-                result = subprocess.run(command_header + [rule_file, str(j), "t", "t", "t"],
+                result = subprocess.run(command_header + [rule_file, str(j), "t", "t", "f"],
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
@@ -101,7 +82,7 @@ def run_exp(command_header):
 
 
 if __name__ == "__main__":
-    command_header = ["/u/lmarsso/memtime/metime", "python3"]
+    command_header = ["../../memtime-master/memtime", "python3"]
     run_exp(command_header)
 
 

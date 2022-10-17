@@ -114,11 +114,7 @@ def symmetry_sub(formula):
 
 
 
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
-
+from collections.abc import Iterable
 class illFormedFormulaException(Exception):
     pass
 
@@ -822,6 +818,7 @@ def mini_solve(solver, actions, vars, eq_vars, ignore_class = None):
     for act in actions:
         if (ignore_class is not None and type(act) in ignore_class) or act.disabled():
             continue
+
         act_type = type(act)
         previous_act = action_by_type.get(act_type, [])
         # if this action has not yet been previously constrained for minimization
@@ -890,6 +887,7 @@ def get_temp_act_constraint_minimize(solver, rules, vars, eq_vars, inductive_ass
         if ignore_class is not None and type(act) in ignore_class:
             ignored_actions.add(act)
             continue
+
         act_type = type(act)
         previous_act = action_by_type.get(act_type, [])
         # if this action has not yet been previously constrained for minimization
@@ -1981,6 +1979,38 @@ def next_sum(s,action):
         value1 = Int(1)
         return AND(s.filter_func.evaulate(action),
                    (child_sum + value1) == s.value,
+                   Equals(s.time, action.time)
+
+                   )
+    else:
+        value1 = s.value_func.evaulate(action)
+        return AND(s.filter_func.evaulate(action), s.value_func.evaulate(action) > Int(0),
+                                                               (child_sum + value1) == s.value,
+                   Equals(s.time, action.time)
+
+                   )
+
+
+def next_bcr_sum(s,action):
+    if not s.child_sum:
+        if s.is_count:
+            child_sum = Count(s.input_type, lambda action1: AND(s.filter_func.evaulate(action1),
+                                                                                                       NEQ(action1, action)
+                                                                ), input_subs=s.input_subs)
+        else:
+            child_sum = Summation(s.input_type, s.value_func, _func(lambda action1: AND(s.filter_func.evaulate(action1),
+                                                                                                       NEQ(action1, action))), input_subs=s.input_subs)
+        child_sum.parent_info = s
+        s.set_child_sum((child_sum, action))
+        action.parent_info = s
+    else:
+        child_sum, action = s.child_sum
+
+
+    if s.is_count:
+        value1 = Int(1)
+        return AND(s.filter_func.evaulate(action),
+                   (child_sum + value1) == s.value,
                    Equals(s.time, action.time),
                    forall(s.input_type, lambda other: Implication(s.filter_func.evaulate(other), other <= action))
                    )
@@ -1992,23 +2022,33 @@ def next_sum(s,action):
                    forall(s.input_type, lambda other: Implication(s.filter_func.evaulate(other), s.value_func.evaulate(other) <= s.value_func.evaulate(action)))
                    )
 
+def extended_sum_bcr(s):
+    return AND(s.value > 0, exist(s.input_type, lambda action: AND(next_bcr_sum(s, action)), input_subs=s.input_subs),
+               s.time >= 0)
+
 def extended_sum(s):
     return AND(s.value > 0, exist(s.input_type, lambda action: AND(next_sum(s, action)), input_subs=s.input_subs),
-                                                   s.time >= 0)
+                                                       s.time >= 0)
 
 
 extended_sum_func = _func(extended_sum)
+extended_sum_bcr_func = _func(extended_sum_bcr)
+
 Summation_rule = forall(_SUMObject, extended_sum)
+Summation_rule_bcr = forall(_SUMObject, extended_sum_bcr)
 
 
 def get_background_actions():
     return [_SUMObject]
 
-def get_background_rules():
-    return [Summation_rule]
+def get_background_rules(bcr):
+    if bcr:
+        return [Summation_rule_bcr]
+    else:
+        return [Summation_rule]
 
 
-def add_background_theories(Actions, state_action, Rules):
+def add_background_theories(Actions, state_action, Rules, bcr = False):
     state_action.extend(get_background_actions())
     Actions.extend(get_background_actions())
-    Rules.extend(get_background_rules())
+    return  Rules + get_background_rules(bcr)

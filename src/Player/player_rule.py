@@ -59,7 +59,6 @@ if __name__ == '__main__':
     friend = make_predicate(_friend, 3)
 
     complete_rules = []
-    add_background_theories(ACTION, state_action, complete_rules)
 
     # No self play
     complete_rules.append(forall(Play, lambda play: NEQ(play.a, play.b)))
@@ -92,6 +91,8 @@ if __name__ == '__main__':
                                                                                                 EQ(f.time, f1.time)),
                                                                                  input_subs={"a": play.a, "b": play.b, "time":f.time})
                                                                            )), input_subs=({"a": Int(1), "b": Int(2)}))
+
+    complete_rules = add_background_theories(ACTION, state_action, complete_rules, bcr)
 
     rules = set()
     start = time.time()

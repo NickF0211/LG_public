@@ -8,11 +8,11 @@ def run_exp(command_header):
 
 
     timeout = 5000
-    rule_file  = "magic_rule_no_opt.py"
-
-    for j in range(1, 10):
-
-        result_file = "results/magic_unbound_N_{}.txt".format(str(j * 50))
+    rule_file  = "bank_rule.py"
+    properties = [3,4,5,6]
+    properties_remap = [1,2,3,4]
+    for j, index in zip(properties, properties_remap):
+        result_file = "results/bh_{}.txt".format(index)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
@@ -20,14 +20,15 @@ def run_exp(command_header):
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
+                f.write(result.stdout)
+                f.write(result.stderr)
+
             except subprocess.TimeoutExpired as t:
                 f.write("timeout {}".format(timeout))
-                continue
 
-            f.write(result.stdout)
-            f.write(result.stderr)
 
-        result_file = "results/magic_unbound_N_{}_restart.txt".format(str(j * 50))
+
+        result_file = "results/bh_{}_restart.txt".format(index)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
@@ -35,14 +36,16 @@ def run_exp(command_header):
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
+                f.write(result.stdout)
+                f.write(result.stderr)
+
             except subprocess.TimeoutExpired as t:
                 f.write("timeout {}".format(timeout))
-                continue
+                #continue
 
-            f.write(result.stdout)
-            f.write(result.stderr)
 
-        result_file = "results/magic_unbound_N_{}_bcr.txt".format(str(j * 50))
+
+        result_file = "results/bh_{}_bcr.txt".format(index)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
@@ -50,46 +53,33 @@ def run_exp(command_header):
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
+                f.write(result.stdout)
+                f.write(result.stderr)
+
             except subprocess.TimeoutExpired as t:
                 f.write("timeout {}".format(timeout))
-                continue
+                #continue
 
-            f.write(result.stdout)
-            f.write(result.stderr)
 
-        result_file = "results/magic_unbound_N_{}_ub.txt".format(str(j * 50))
+        result_file = "results/bh_{}_all.txt".format(index)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
-                result = subprocess.run(command_header + [rule_file, str(j), "f", "f", "t"],
+                result = subprocess.run(command_header + [rule_file, str(j), "t", "t", "f"],
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
+
+                f.write(result.stdout)
+                f.write(result.stderr)
+
             except subprocess.TimeoutExpired as t:
                 f.write("timeout {}".format(timeout))
-                continue
+                #continue
 
-            f.write(result.stdout)
-            f.write(result.stderr)
-
-        result_file = "results/magic_unbound_N_{}_all.txt".format(str(j * 50))
-        print(result_file)
-        with open(result_file, 'w') as f:
-            try:
-                result = subprocess.run(command_header + [rule_file, str(j), "t", "t", "t"],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        universal_newlines=True,
-                                        timeout=timeout)
-            except subprocess.TimeoutExpired as t:
-                f.write("timeout {}".format(timeout))
-                continue
-
-            f.write(result.stdout)
-            f.write(result.stderr)
 
 if __name__ == "__main__":
-    command_header = ["/u/lmarsso/memtime/memtime", "python3"]
+    command_header = ["../../memtime-master/memtime", "python3"]
     run_exp(command_header)
 

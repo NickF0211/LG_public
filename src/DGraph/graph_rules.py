@@ -57,8 +57,6 @@ def get_num_parent(node, time, tigger_action):
 
 complete_rules = []
 
-add_background_theories(ACTION, state_action, complete_rules)
-
 #a node can be added if it was not already there
 complete_rules.append(forall(AddNode, lambda an:
     NOT(is_node_available(an.node, an.time-1))))
@@ -162,7 +160,7 @@ if __name__ == '__main__':
     be changed based on parsed input  
     '''
     is_minimized = False
-
+    complete_rules = add_background_theories(ACTION, state_action, complete_rules, bcr)
     check_property_refining(target_rule, set(), complete_rules, ACTION, state_action, True, min_solution=True,
                             final_min_solution=True, restart=restart, boundary_case=bcr, universal_blocking=ub)
     print(time.time() - start)

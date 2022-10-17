@@ -1,3 +1,4 @@
+from logic_operator import _SUMObject
 def multisort(xs, specs):
     for key, reverse in reversed(specs):
         xs.sort(key=key, reverse=reverse)
@@ -5,7 +6,7 @@ def multisort(xs, specs):
 
 
 
-def print_trace(model, ACTION, state_action, include_temp = False, should_print=True, ignore_class = None):
+def print_trace(model, ACTION, state_action, include_temp = False, should_print=True, ignore_class = None, check_sum = False):
     all_objects = []
     for action in ACTION:
         if include_temp:
@@ -29,4 +30,5 @@ def print_trace(model, ACTION, state_action, include_temp = False, should_print=
                 print(res)
             vol += 1
         old_res = res
+
     return len(entry)

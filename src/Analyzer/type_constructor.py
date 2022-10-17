@@ -1,9 +1,5 @@
 import copy
-
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from collections.abc import Iterable
 
 from pysmt.shortcuts import *
 from pysmt import fnode

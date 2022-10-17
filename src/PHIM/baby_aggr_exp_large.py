@@ -1,25 +1,39 @@
 
-import subprocess
 import os
+import subprocess
 
 def run_exp(command_header):
+    with open("baby_domain_template.txt", 'r') as domain_template:
+        domain_content = domain_template.read()
+
+    with open("baby_rule_template_aggr.txt", 'r') as rule_template:
+        rule_conetent = rule_template.read()
+
+    timeout = 5000
+    #init value
+
     if not os.path.exists('results'):
         os.makedirs('results')
 
 
-    timeout = 5000
-    rule_file  = "player_rule_no_opt.py"
-    FRIEND_THRESHOLDs =  [1, 2, 3, 3, 5]
-    Group_Sizes = [2, 3, 4, 5, 6]
-    Turn_Around_Playerss = [1, 2, 2, 3, 4]
+    vol_bound = 5000
 
-    for FT, GS, TP in zip(FRIEND_THRESHOLDs, Group_Sizes, Turn_Around_Playerss):
+    outfile = "baby_domain_unbounded.py"
+    rule_file = "baby_rule_aggr_unbounded.py"
+    with open(outfile, 'w') as out_f:
+        out_f.write(domain_content.format(pid="None", sid="None", aid="None", time="None"))
 
-        result_file = "results/{}_{}_{}.txt".format(str(FT), str(GS), str(TP))
+    for j in range(1, 12):
+        with open(rule_file, 'w') as rule_f:
+            rule_f.write(
+                rule_conetent.format(domain_file=outfile[:-3], i=j, vol_bound=vol_bound))
+
+
+        result_file = "results/pha_{}.txt".format(j)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
-                result = subprocess.run(command_header + [ rule_file, str(FT), str(GS), str(TP)], stdout=subprocess.PIPE,
+                result = subprocess.run(command_header + [ rule_file, "t"], stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
@@ -31,12 +45,27 @@ def run_exp(command_header):
                 #continue
 
 
-
-        result_file = "results/{}_{}_{}_restart.txt".format(str(FT), str(GS), str(TP))
+        result_file = "results/pha_{}_restart.txt".format(j)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
-                result = subprocess.run(command_header + [rule_file, str(FT), str(GS), str(TP), "t"], stdout=subprocess.PIPE,
+                result = subprocess.run(command_header + [rule_file, "t", "t"], stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        universal_newlines=True,
+                                        timeout=timeout)
+                f.write(result.stdout)
+                f.write(result.stderr)
+            except subprocess.TimeoutExpired as t:
+                f.write("timeout {}".format(timeout))
+                #continue
+
+
+
+        result_file = "results/pha_{}_bcr.txt".format(j)
+        print(result_file)
+        with open(result_file, 'w') as f:
+            try:
+                result = subprocess.run(command_header + [rule_file, "t", "f", "t"], stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
@@ -47,61 +76,23 @@ def run_exp(command_header):
                 f.write("timeout {}".format(timeout))
                 #continue
 
-
-
-        result_file = "results/{}_{}_{}_bcr.txt".format(str(FT), str(GS), str(TP))
+        result_file = "results/pha_all.txt".format(j)
         print(result_file)
         with open(result_file, 'w') as f:
             try:
-                result = subprocess.run(command_header + [rule_file, str(FT), str(GS), str(TP), "f", "t"], stdout=subprocess.PIPE,
+                result = subprocess.run(command_header + [rule_file, "t", "t", "t"], stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
                 f.write(result.stdout)
                 f.write(result.stderr)
-
             except subprocess.TimeoutExpired as t:
                 f.write("timeout {}".format(timeout))
                 #continue
-
-
-
-        result_file = "results/{}_{}_{}_ub.txt".format(str(FT), str(GS), str(TP))
-        print(result_file)
-        with open(result_file, 'w') as f:
-            try:
-                result = subprocess.run(command_header + [rule_file, str(FT), str(GS), str(TP), "f", "f", "t"],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        universal_newlines=True,
-                                        timeout=timeout)
-                f.write(result.stdout)
-                f.write(result.stderr)
-
-            except subprocess.TimeoutExpired as t:
-                f.write("timeout {}".format(timeout))
-                #continue
-
-
-
-        result_file = "results/{}_{}_{}_all.txt".format(str(FT), str(GS), str(TP))
-        print(result_file)
-        with open(result_file, 'w') as f:
-            try:
-                result = subprocess.run(command_header + [rule_file, str(FT), str(GS), str(TP), "t", "t", "t"],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        universal_newlines=True,
-                                        timeout=timeout)
-                f.write(result.stdout)
-                f.write(result.stderr)
-
-            except subprocess.TimeoutExpired as t:
-                f.write("timeout {}".format(timeout))
 
 
 
 if __name__ == "__main__":
-    command_header = ["/u/lmarsso/memtime/memtime", "python3"]
+    command_header = ["../../memtime-master/memtime", "python3"]
     run_exp(command_header)
 

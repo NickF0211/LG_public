@@ -247,8 +247,12 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
         #handle restart
         if restart and round_without_new_rules > restart_threshold:
             #clear the rules
+            print("restarted")
             rules.clear()
-            random.shuffle(complete_rules)
+            #random.shuffle(complete_rules)
+            #rules = set(get_background_rules(boundary_case))
+            # we still want to add background rules
+            # add_background_theories(ACTION, state_action, rules, add_actions=False)
             round_without_new_rules = 0
             restart_threshold = int(restart_threshold * 1.5)
 
@@ -282,7 +286,6 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
             solved = solver_under_eq_assumption(s, over_vars, eq_assumption)
 
         if solved:
-            round_without_new_rules = 0
             save_model = s.get_model()
             #Summation.frontier = new_frontier
             #Summation.collections = new_summation
@@ -313,12 +316,11 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
                     current_best = model
                     vol = print_trace(model, ACTION, state_action, ignore_class=state_action, should_print=False)
 
-
                     if min_solution or (out_of_bound_warning and vol > vol_bound):
                         # s.pop()
                         model = get_temp_act_constraint_minimize(s, rules, over_vars, eq_assumption, addition_actions=get_all_actions(ACTION), round=application_rounds,
                                                                  disable_minimization=disable_minimization, ignore_class=ignore_actions, relax_mode =  False)
-                        new_vol = print_trace(model, ACTION, state_action, should_print=False, ignore_class=state_action)
+                        new_vol = print_trace(model, ACTION, state_action, should_print=False, ignore_class=state_action, check_sum=True)
                         if new_vol > vol_bound:
                             print("Bounded UNSAT")
                             return
@@ -340,6 +342,7 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
                         return
                 else:
                     print("need to add more rules")
+                    round_without_new_rules = 0
                     rules = rules.union(res)
                     new_rules = res
                     should_calibrate = True

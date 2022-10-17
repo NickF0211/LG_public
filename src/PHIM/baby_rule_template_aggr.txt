@@ -196,17 +196,10 @@ def generate_function(index, max_pid):
     else:
         return eventually(Erase, lambda erase: EQ(erase.pid, Int(min(index, max_pid))))
 
-starting = 5
-fuzz_counter = 18
-for k in range(8, fuzz_counter):
-    globals()["rule_" + str(k)] = generate_function(starting, max_pid)
-    starting += 1
-
-cur_rule = fuzz_counter
-for k in range(7, fuzz_counter):
-    for j in range(k+1, fuzz_counter):
-        globals()["rule_"+str(cur_rule)] = AND(globals()["rule_"+str(k)], globals()["rule_"+str(j)])
-        cur_rule += 1
+rule_8 = generate_function(13, max_pid)
+rule_9 = generate_function(15, max_pid)
+rule_10 = generate_function(20, max_pid)
+rule_11 = generate_function(25, max_pid)
 
 # data minimisation
 
@@ -234,6 +227,6 @@ if __name__ == '__main__':
     rules = set()
     start = time.time()
     print(mymin)
-    add_background_theories(ACTION, state_action, complete_rules)
+    complete_rules = add_background_theories(ACTION, state_action, complete_rules, bcr)
     check_property_refining(rule_{i}, rules, complete_rules, ACTION, state_action, True, vol_bound = {vol_bound}, min_solution=mymin, final_min_solution=True, restart=restart, boundary_case = bcr, universal_blocking=ub)
     print(time.time() - start)

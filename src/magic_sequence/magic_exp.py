@@ -12,7 +12,7 @@ def run_exp(command_header):
 
     for j in range(1, 10):
 
-        result_file = "results/magic_unbound_N_opt_{}.txt".format(str(j * 50))
+        result_file = "results/m_{}.txt".format(str(j * 50))
         print(result_file)
         with open(result_file, 'w') as f:
             try:
@@ -20,14 +20,16 @@ def run_exp(command_header):
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
+                f.write(result.stdout)
+                f.write(result.stderr)
+
             except subprocess.TimeoutExpired as t:
                 f.write("timeout {}".format(timeout))
                 continue
 
-            f.write(result.stdout)
-            f.write(result.stderr)
 
-        result_file = "results/magic_unbound_N_opt_{}_restart.txt".format(str(j * 50))
+
+        result_file = "results/m_{}_restart.txt".format(str(j * 50))
         print(result_file)
         with open(result_file, 'w') as f:
             try:
@@ -35,14 +37,17 @@ def run_exp(command_header):
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
+
+                f.write(result.stdout)
+                f.write(result.stderr)
+
             except subprocess.TimeoutExpired as t:
                 f.write("timeout {}".format(timeout))
                 continue
 
-            f.write(result.stdout)
-            f.write(result.stderr)
 
-        result_file = "results/magic_unbound_N_opt_{}_bcr.txt".format(str(j * 50))
+
+        result_file = "results/m_{}_bcr.txt".format(str(j * 50))
         print(result_file)
         with open(result_file, 'w') as f:
             try:
@@ -50,46 +55,37 @@ def run_exp(command_header):
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
+
+                f.write(result.stdout)
+                f.write(result.stderr)
+
             except subprocess.TimeoutExpired as t:
                 f.write("timeout {}".format(timeout))
                 continue
 
-            f.write(result.stdout)
-            f.write(result.stderr)
 
-        result_file = "results/magic_unbound_N_opt_{}_ub.txt".format(str(j * 50))
+
+
+        result_file = "results/m_{}_all.txt".format(str(j * 50))
         print(result_file)
         with open(result_file, 'w') as f:
             try:
-                result = subprocess.run(command_header + [rule_file, str(j), "f", "f", "t"],
+                result = subprocess.run(command_header + [rule_file, str(j), "t", "t"],
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         universal_newlines=True,
                                         timeout=timeout)
+
+                f.write(result.stdout)
+                f.write(result.stderr)
+
             except subprocess.TimeoutExpired as t:
                 f.write("timeout {}".format(timeout))
-                continue
+                #continue
 
-            f.write(result.stdout)
-            f.write(result.stderr)
 
-        result_file = "results/magic_unbound_N_opt_{}_all.txt".format(str(j * 50))
-        print(result_file)
-        with open(result_file, 'w') as f:
-            try:
-                result = subprocess.run(command_header + [rule_file, str(j), "t", "t", "t"],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        universal_newlines=True,
-                                        timeout=timeout)
-            except subprocess.TimeoutExpired as t:
-                f.write("timeout {}".format(timeout))
-                continue
-
-            f.write(result.stdout)
-            f.write(result.stderr)
 
 if __name__ == "__main__":
-    command_header = ["/u/lmarsso/memtime/memtime", "python3"]
+    command_header = ["../../memtime-master/memtime", "python3"]
     run_exp(command_header)
 
