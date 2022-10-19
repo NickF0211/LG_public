@@ -24,7 +24,7 @@ def run_exp(command_header):
         with open(outfile, 'w') as out_f:
             out_f.write(config_tempalte.format(b_data = data, b_dataid =dataid, b_dsid = dsid))
 
-        for j in range(1, 12):
+        for j in range(1, 9):
             result_file = "results/covid_{}_rule_{}.txt".format(i, j)
             print(result_file)
             with open(result_file, 'w') as f:
@@ -112,7 +112,7 @@ def run_exp(command_header):
     with open(outfile, 'w') as out_f:
         out_f.write(config_tempalte.format(b_data="None", b_dataid="None", b_dsid="None"))
 
-    for j in range(1, 12):
+    for j in range(1, 9):
         result_file = "results/covid_unbound_rule_{}.txt".format(str(j))
         print(result_file)
         with open(result_file, 'w') as f:
@@ -192,6 +192,6 @@ def run_exp(command_header):
             f.write(result.stderr)
 
 if __name__ == "__main__":
-    command_header = ["../../memtime-master/memtime","python3"]
+    command_header = ["memtime","python3"]
     run_exp(command_header)
 

@@ -84,6 +84,6 @@ def run_exp(command_header):
 
 
 if __name__ == "__main__":
-    command_header = ["../../memtime-master/memtime", "python3"]
+    command_header = ["memtime", "python3"]
     run_exp(command_header)
 

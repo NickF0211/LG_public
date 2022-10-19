@@ -7,7 +7,7 @@ def run_exp(command_header):
         os.makedirs('results')
 
 
-    timeout = 3600
+    timeout = 5000
     rule_file = "day_bank_rule.py"
     properties = [3, 4, 5, 6, 8]
     properties_remap = [1,2,3,4, 5]
@@ -80,6 +80,6 @@ def run_exp(command_header):
                 #continue
 
 if __name__ == "__main__":
-    command_header = ["../../memtime-master/memtime", "python3"]
+    command_header = ["memtime", "python3"]
     run_exp(command_header)
 
