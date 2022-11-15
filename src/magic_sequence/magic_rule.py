@@ -35,7 +35,6 @@ if __name__ == '__main__':
         ub = args[2].lower().startswith('t')
 
     complete_rules = []
-    add_background_theories(ACTION, state_action, complete_rules)
 
     # Magic property
     complete_rules.append(forall(Magic, lambda m: Implication(m.x > 0, EQ(m.y, number_of_y(m.x)))))
@@ -56,6 +55,7 @@ if __name__ == '__main__':
 
     rules = set()
     start = time.time()
+    complete_rules = add_background_theories(ACTION, state_action, complete_rules)
     check_property_refining(target_rule, rules, complete_rules, ACTION, state_action, True, min_solution=True,
                             final_min_solution=True, restart=restart, boundary_case=bcr, universal_blocking=ub)
     print(time.time() - start)
