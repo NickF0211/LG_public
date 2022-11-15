@@ -268,9 +268,6 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
 
         new_rules.clear()
         #print("end encoding")
-        s.add_assertion(And(get_all_constraint(ACTION, full=False)))
-        add_forall_defs(s)
-        add_predicate_constraint(s)
 
         #now update the constraints
         update_underapprox(s)
@@ -278,6 +275,10 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
         for c in over_constraints:
             if c != TRUE():
                 s.add_assertion(c)
+
+        add_forall_defs(s)
+        add_predicate_constraint(s)
+        s.add_assertion(And(get_all_constraint(ACTION, full=False)))
 
         if current_min_solution:
             solved = True

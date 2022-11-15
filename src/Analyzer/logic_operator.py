@@ -743,6 +743,17 @@ def get_assumption_core(solver):
     pysmt_assumptions = [solver.converter.back(t) for t in assumptions]
     return pysmt_assumptions
 
+minimize_memory = dict()
+action_activity = dict()
+
+def update_activity(act, round):
+    old_round = minimize_memory.get(act, 0)
+    old_act = action_activity.get(act, 10.0)
+    decay_ratio = 0.8
+    round_diff = round - old_round
+    new_activity = old_act * (decay_ratio**round_diff) + 1
+    action_activity[act] = new_activity
+    minimize_memory[act] = round
 
 def maxsat(s, Fs, round = -1, namespace=None, relax_mode = False, background = None , eq_vars= None):
     cost = 0
@@ -770,12 +781,14 @@ def maxsat(s, Fs, round = -1, namespace=None, relax_mode = False, background = N
             for f in core:
                 act = namespace.get(f, None)
                 if act is not None:
-                    minimize_memory[namespace[f]] = round
+                    update_activity(namespace[f], round)
+                    #minimize_memory[namespace[f]] = round
         #print("relaxing core")
         if relax_mode:
             # if we are not interesting in the optimial solution, then we can get find
             # any maximal correction subset instead of the max solution
-            Fs.remove(core[0])
+            max_clause = max(core, key=lambda c: action_activity.get(namespace[c], 10.0) if c in namespace else 0)
+            Fs.remove(max_clause)
         else:
             relax_core(s, core, Fs)
         #print("next")
@@ -848,7 +861,6 @@ def mini_solve(solver, actions, vars, eq_vars, ignore_class = None):
     return model
 
 
-minimize_memory = dict()
 
 def coordinate_ignored_actions(actions, model):
     result = []
@@ -939,6 +951,15 @@ def get_temp_act_constraint_minimize(solver, rules, vars, eq_vars, inductive_ass
     #filtering phase
     filtering_threshold = 5
     filtered_soft_constraints = set()
+
+    i_core = [f for f in get_assumption_core(solver) if f in soft_constraints]
+    if len(i_core) == 1:
+        act = name_space[i_core[0]]
+        unqiue_act = []
+        exist_obj = Exists.Temp_ACTs.get(act)
+        unqiue_act.append((act, exist_obj))
+        include_new_actions(unqiue_act, rules, should_block, inductive_assumption_table)
+        return
 
     if round >= 0 and relax_mode and not no_duplicate:
         for act in intermediate:
@@ -1031,12 +1052,14 @@ def no_duplicate_filter(available, names_pace, solver, soft_constraints, vars, e
 
 def include_new_actions(unqiue_act, rules, should_block = False, inductive_assumption_table = None, ub=False):
     for act, exist_obj in unqiue_act:
-        # print(type(act))
+        print(type(act))
         Exists.Temp_ACTs.pop(act)
         act.make_permanent()
         new_action = act
         exist_obj.act_include = new_action
         Exists.new_included.add(new_action)
+        if act in action_activity:
+            action_activity.pop(act)
         #should we add inductive assumption
         if inductive_assumption_table is not None and should_block:
             # now check if the blocking clause is given
@@ -1173,7 +1196,17 @@ class Exists(Operator):
             Exists.new_included.add(action)
         elif not include_new_act and action == self.act_non_include and action != self.act_include:
             if disable:
-                Exists.check_ACTS[action] = self
+                constraints = []
+                if isinstance(action, _SUMObject):
+                    constraints.append(Not(action.presence))
+                choice_list = []
+                act_type = type(action)
+                for t_action in act_type.collect_list:
+                    choice_list.append(action.build_eq_constraint(t_action))
+                choice_constraint = Implies(action.presence, Or(choice_list))
+                result = Or(choice_constraint)
+                constraints.append(result)
+                base_constraint = And(base_constraint, And(constraints))
             else:
                 #exist_obj = Exists.Temp_ACTs.get(action, None)
                 #assert exist_obj is None or exist_obj == self
@@ -1199,7 +1232,7 @@ class Exists(Operator):
 def add_forall_defs(solver):
     for constraint in Forall.pending_defs:
         solver.add_assertion(constraint)
-    #Forall.pending_defs.clear()
+    Forall.pending_defs.clear()
 
 
 class C_Summation(Arth_Operator):
@@ -1463,15 +1496,15 @@ class _SUMObject(Action):
                     condition = AND(action.presence, self.filter_func.evaulate(action))
                     value = encode(self.value_func.evaulate(action),
                                    assumption=assumption, include_new_act=include_new_act, exception=exception,
-                                   disable=disable)
+                                   disable=True)
                     deduplicate_condition = AND([NEQ(action, explored_action) for explored_action in considered])
                     cond = AND(condition, deduplicate_condition)
                     neg_cond = NOT(cond)
                     # fresh_ite_var = FreshSymbol(template="ite%d", typename=INT)
                     res_cond = encode(cond, assumption=assumption, include_new_act=include_new_act, exception=exception,
-                                   disable=disable)
+                                   disable=True)
                     neg_res_cond = encode(neg_cond, assumption=assumption, include_new_act=include_new_act, exception=exception,
-                                   disable=disable)
+                                   disable=True)
                     ite_result =  ITE(OR(Not(neg_res_cond), res_cond), value,  Int(0))
                     starting += ite_result
                     considered.add(action)
