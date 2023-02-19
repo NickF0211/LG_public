@@ -17,7 +17,7 @@ from graph_domain import *
 
 def is_node_available(node, time, add_node = None):
     if add_node and isinstance(add_node, AddNode):
-        return NOT(exist(RemoveNode, lambda rn: AND(EQ(rn.node, add_node.node), rn.time <= time, rn > add_node)))
+        return AND(add_node.time <= time, NOT(exist(RemoveNode, lambda rn: AND(EQ(rn.node, add_node.node), rn.time <= time, rn > add_node))))
     else:
         return since(AddNode, lambda an: EQ(an.node, node), RemoveNode, lambda rn:
                      EQ(rn.node, node),time, input_subs={"node":node})
@@ -25,17 +25,23 @@ def is_node_available(node, time, add_node = None):
 def same_edge(edge, f, t):
     return AND(EQ(edge.f, f), EQ(edge.t, t))
 
-def is_edge_available(f, t, time):
+def is_edge_available(f, t, time, add_edges = None):
+    if add_edges:
+        return AND(add_edges <= time, same_edge(add_edges, f, t),
+                   NOT(exist(RemoveEdge, lambda re: AND(same_edge(re, f, t), add_edges < re, re <= time))))
     return since(AddEdge, lambda ae: same_edge(ae, f, t), RemoveEdge, lambda re:
     same_edge(re, f, t), time, input_subs={"f":f, "t":t})
 
+def has_edge_established(f, t, time):
+    return once(AddEdge, lambda ae: same_edge(ae, f, t), time, input_subs={"f":f, "t":t})
+
 def has_parent(node, time):
     return once(AddEdge, lambda ae: AND( EQ(ae.t, node),
-                                        is_edge_available(ae.f, ae.t, time)), time, input_subs={"t":node})
+                                        is_edge_available(ae.f, ae.t, time, add_edges=ae)), time, input_subs={"t":node})
 
 def has_child(node, time):
     return once(AddEdge, lambda ae: AND(EQ(ae.f, node),
-                                        is_edge_available(ae.f, ae.t, time)), time, input_subs={"f":node})
+                                        is_edge_available(ae.f, ae.t, time, add_edges=ae)), time, input_subs={"f":node})
 
 # a node is a root if it doesn't have any parent
 def is_root(node, time):
@@ -44,13 +50,21 @@ def is_root(node, time):
 
 
 
-def get_num_child(node, time, trigger_action):
-    return Count(AddEdge, lambda ae: AND(EQ(ae.f, node),
-                                                          is_edge_available(ae.f, ae.t, time)), trigger_act=trigger_action)
+def get_num_child(node, time, trigger_action, historical = False):
+    if historical:
+        return Count(AddEdge, lambda ae: AND(EQ(ae.f, node),
+                                             has_edge_established(ae.f, ae.t, time)), trigger_act=trigger_action)
+    else:
+        return Count(AddEdge, lambda ae: AND(EQ(ae.f, node),
+                                                              is_edge_available(ae.f, ae.t, time)), trigger_act=trigger_action)
 
-def get_num_parent(node, time, tigger_action):
-    return Count(AddEdge, lambda ae: AND(EQ(ae.t, node),
-                                                          is_edge_available(ae.f, ae.t, time)), trigger_act=tigger_action)
+def get_num_parent(node, time, tigger_action, historical = False):
+    if historical:
+        return Count(AddEdge, lambda ae: AND(EQ(ae.t, node),
+                                             has_edge_established(ae.f, ae.t, time)), trigger_act=tigger_action)
+    else:
+        return Count(AddEdge, lambda ae: AND(EQ(ae.t, node),
+                                                              is_edge_available(ae.f, ae.t, time)), trigger_act=tigger_action)
 
 # get_num_child = make_predicate(_get_num_child, 2)
 # get_num_parent = make_predicate(_get_num_parent, 2)
@@ -92,34 +106,42 @@ complete_rules.append(forall(RemoveEdge, lambda re: is_edge_available(re.f, re.t
 
 
 #tree
-tree_req = forall(AddEdge, lambda ae: get_num_parent(ae.f, ae.time, ae) <= Int(2))
-binary_tree_req = forall(AddEdge, lambda ae: get_num_child(ae.f, ae.time, ae) <= Int(2))
-connected_rule = forall(AddNode, lambda an: get_num_parent(an.node, an.time, an) > Int(0))
+tree_req = forall(AddEdge, lambda ae: get_num_parent(ae.f, ae.time, ae, historical=True) <= Int(2))
+binary_tree_req = forall(AddEdge, lambda ae: get_num_child(ae.f, ae.time, ae, historical=True) <= Int(2))
+connected_rule = forall(AddNode, lambda an: get_num_parent(an.node, an.time, an) >= Int(1))
 
 
 complete_rules.append(tree_req )
 complete_rules.append(binary_tree_req)
 complete_rules.append(connected_rule)
 
-rule_1 = exist(Var, lambda var: Count(AddNode, lambda addnode: is_node_available(addnode.node, var.v)) > Int(2))
-rule_2 = exist(Var, lambda var: Count(AddNode, lambda addnode: is_node_available(addnode.node, var.v)) > Int(4))
-rule_3 = exist(Var, lambda var: Count(AddNode, lambda addnode: is_node_available(addnode.node, var.v)) > Int(5))
-rule_4 = exist(Var, lambda var: Count(AddNode, lambda addnode: is_node_available(addnode.node, var.v)) > Int(8))
-rule_5 = exist(Var, lambda var: Count(AddNode, lambda addnode: is_node_available(addnode.node, var.v)) > Int(10))
-rule_6 = exist(Var, lambda var: Count(AddNode, lambda addnode: is_node_available(addnode.node, var.v)) > Int(12))
+def make_available_nodes(node_target, t):
+    constraints = []
+    nodes = [AddNode(input_subs={"node": Int(i), "presence":TRUE()}) for i in range(node_target)]
+    for node in nodes:
+        constraints.append(is_node_available(node.node, t, add_node=node))
+    return AND(constraints)
+
+
+rule_1 = exist(Var, lambda var: make_available_nodes(2, var.v))
+rule_2 = exist(Var, lambda var: make_available_nodes(4, var.v))
+rule_3 = exist(Var, lambda var: make_available_nodes(6, var.v))
+rule_4 = exist(Var, lambda var: make_available_nodes(8, var.v))
+rule_5 = exist(Var, lambda var: make_available_nodes(10, var.v))
+rule_6 = exist(Var, lambda var: make_available_nodes(12, var.v))
 rule_7 = exist([Var, Var], lambda var1, var2:
-                AND(Count(AddNode, lambda addnode: is_node_available(addnode.node, var1.v) ) > Int(4),
-                   Count(AddNode, lambda addnode1: is_node_available(addnode1.node, var2.v)) < Int(2),
+                AND(make_available_nodes(5, var1.v),
+                   Count(AddNode, lambda addnode1: is_node_available(addnode1.node, var2.v, add_node=addnode1)) < Int(5),
                     var1.v < var2.v)
                 )
 rule_8 = exist([Var, Var], lambda var1, var2:
-                AND(Count(AddNode, lambda addnode: is_node_available(addnode.node, var1.v) ) > Int(5),
-                   Count(AddNode, lambda addnode1: is_node_available(addnode1.node, var2.v)) < Int(3),
+                AND(make_available_nodes(6, var1.v),
+                   Count(AddNode, lambda addnode1: is_node_available(addnode1.node, var2.v, add_node=addnode1)) < Int(5),
                     var1.v < var2.v)
                 )
 rule_9 = exist([Var, Var], lambda var1, var2:
-                AND(Count(AddNode, lambda addnode: is_node_available(addnode.node, var1.v) ) > Int(6),
-                   Count(AddNode, lambda addnode1: is_node_available(addnode1.node, var2.v)) < Int(4),
+                AND(make_available_nodes(7, var1.v),
+                   Count(AddNode, lambda addnode1: is_node_available(addnode1.node, var2.v, add_node=addnode1)) < Int(5),
                     var1.v < var2.v)
                 )
 rule_10 = exist([AddEdge, AddEdge, AddEdge, AddEdge], lambda ae1, ae2, ae3, ae4:

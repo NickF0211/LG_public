@@ -18,10 +18,10 @@ domain_header = "from type_constructor import create_type, create_action, create
                 "type_dict = dict()\n"
 
 main_func = "\nstart = time.time() \n" \
-            "is_minimized = True \n" \
+            "is_minimized = {min_sol} \n" \
             "max_vol = {volum_input} \n" \
             "check_property_refining(rule, set(), complete_rules, ACTION, state_action, True, disable_minimization=False, \n" \
-                            "min_solution=is_minimized, vol_bound = max_vol, ignore_state_action = True, boundary_case = {bc}, universal_blocking={ub})\n" \
+                            "min_solution=is_minimized, vol_bound = max_vol, ignore_state_action = True, boundary_case = {bc}, universal_blocking=False)\n" \
             "print(time.time() - start)\n"
 
 property_header = "from input_rule import * \n"
@@ -59,13 +59,15 @@ def get_query_from_react():
 
                 editorinput = base64.b64decode(bytes(value, 'utf-8')).decode('utf-8')
                 file.write(editorinput)
+                min_sol = False
+                bc = False
                 if filename == "property.py":
                     if "boundaryCaseReduction" in editor_input:
                         bc = str2bool(editor_input["boundaryCaseReduction"])
-                    if "universalBlocking" in editor_input:
-                        ub = str2bool(editor_input["universalBlocking"])
+                    if "minSolution" in editor_input:
+                        min_sol = str2bool(editor_input["minSolution"])
                     func_to_wtire = main_func.format(volum_input=editor_input['volume'],
-                                                     bc = bc, ub = ub  )
+                                                     bc = bc, min_sol = min_sol  )
                     file.write(func_to_wtire)
     try:
         shutil.move("input_domain.py", os.path.join(src_loc, "input_domain.py"))

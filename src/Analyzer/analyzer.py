@@ -19,11 +19,11 @@ def get_all_actions(ACTION):
 def complete_clear_actions(ACTION):
     for ACT in ACTION:
         ACT.collect_list.clear()
-        ACT.temp_collection_set = set()
+        ACT.temp_collection_set = OrderedSet()
         ACT.syn_collect_list.clear()
         ACT.additional_constraint.clear()
         ACT.snap_shot.clear()
-        ACT.EQ_CLASS = [set()]
+        ACT.EQ_CLASS = [OrderedSet()]
         #TODO, may need to clear indexs
 
 def clear_Exist_cache():
@@ -50,7 +50,7 @@ def clear_rules(rules):
 
 
 
-considered_object = set()
+considered_object = OrderedSet()
 considered_constraint = []
 def get_all_constraint(ACTION, full=True):
     global considered_constraint
@@ -108,11 +108,11 @@ def action_changed(ACTION):
     return changed
 
 def check_trace(model, complete_rules, rules, stop_at_first = True):
-    solver = Solver()
+    solver = Solver(name = "z3", random_seed = 43)
     #assert(len(Forall.pending_defs) == 0)
     parital_model =  [EqualsOrIff(k, v) for k, v in model]
     solver.add_assertion(And(parital_model))
-    result = set()
+    result = OrderedSet()
     for rule in complete_rules:
         if rule in rules:
             continue
@@ -133,6 +133,7 @@ def check_trace(model, complete_rules, rules, stop_at_first = True):
 
 
 def inductive_checking(property, rules, complete_rules, ACTION, state_action, minimized = False):
+    rules = OrderedSet(rules)
     snap_shot_all(ACTION)
     application_rounds = 0
     inductive_assumption_table= dict()
@@ -212,7 +213,7 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
                             boundary_case = False, universal_blocking=False, restart=False, ignore_state_action = False):
 
     print("solving under config: restart {}, bcr {}, ub {}, min {}".format(restart, boundary_case, universal_blocking, min_solution))
-
+    rules = OrderedSet(rules)
     current_min_solution = False
     out_of_bound_warning = False
     application_rounds = 1
@@ -232,13 +233,13 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
 
     new_rules = set(rules)
     should_calibrate = True
-    s = Solver("z3", unsat_cores_mode=None)
+    s = Solver("z3", unsat_cores_mode=None, random_seed = 43)
     s.add_assertion(prop)
     # restart control
 
     restart_threshold = 10
     round_without_new_rules = 0
-    eq_assumption = set()
+    eq_assumption = OrderedSet()
 
     while application_rounds < action_iteration_bound:
         print(application_rounds)
@@ -266,6 +267,13 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
                 if p in new_rules:
                     s.add_assertion(temp_res)
 
+        # for ACt in ACTION:
+        #     print(ACt)
+        #     print(ACt.collect_list)
+        #     print(ACt.snap_shot)
+        #     print("sus:")
+        #     for act in ACt.temp_collection_set:
+        #         print(act)
         new_rules.clear()
         #print("end encoding")
 
@@ -295,6 +303,7 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
             for c in constraints:
                 if c != TRUE():
                     s.add_assertion(c)
+                    #print("add temp constraint {}".format(serialize(c)))
             #s.add_assertion(And(constraints))
             vars = vars.union(over_vars)
 
@@ -322,6 +331,7 @@ def check_property_refining(property, rules, complete_rules, ACTION, state_actio
                         model = get_temp_act_constraint_minimize(s, rules, over_vars, eq_assumption, addition_actions=get_all_actions(ACTION), round=application_rounds,
                                                                  disable_minimization=disable_minimization, ignore_class=ignore_actions, relax_mode =  False)
                         new_vol = print_trace(model, ACTION, state_action, should_print=False, ignore_class=state_action, check_sum=True)
+                        print(new_vol, vol)
                         if new_vol > vol_bound:
                             print("Bounded UNSAT")
                             return

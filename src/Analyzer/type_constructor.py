@@ -1,6 +1,7 @@
 import copy
 from collections.abc import Iterable
 
+from ordered_set import OrderedSet
 from pysmt.shortcuts import *
 from pysmt import fnode
 from pysmt.typing import STRING, INT, REAL
@@ -34,7 +35,7 @@ def set_value(g, names, value):
     return _set_value(g, name_tokens, value)
 
 def get_variables_by_type(type_name):
-    return attribute_variable_map.get(type_name, set())
+    return attribute_variable_map.get(type_name, OrderedSet())
 
 def add_variable_by_type(type_name, variable):
     target = get_variables_by_type(type_name)
@@ -73,11 +74,12 @@ class Action():
 
     def __init__(self):
         value = self.get_counter_update()
+        self.token = "action_presence_{}".format(value)
         self.presence = Symbol("action_presence_{}".format(value), typename=BOOL)
         self.card = Symbol("action_card_{}".format(value), typename=INT)
         self.cardinality_constraint = And(Iff(self.presence, Equals(self.card, Int(1))),
                                           Iff(Not(self.presence), Equals(self.card, Int(0))))
-        self.sym_constraint = set()
+        self.sym_constraint = OrderedSet()
         self.is_disabled = False
         self.parent_info = None
 
@@ -112,6 +114,12 @@ class Action():
     def __le__(self, other):
         return self._comparsion(other, LE)
 
+
+    def __repr__(self):
+        return "A_{}".format(self.token)
+
+    def __hash__(self):
+        return hash(self.__repr__())
 
 
 def create_type(type_name, type_dict = dict(), upper_bound=None, lower_bound=None, var_type=INT, enum = None):
@@ -363,7 +371,7 @@ def create_action(action_name, attributes, constraint_dict, sub_actions = None, 
 
     def build_eq_constraint(self, other, consider_time = True, exceptions=None):
         if exceptions is None:
-            exceptions = set()
+            exceptions = OrderedSet()
         if not consider_time:
             exceptions.add("time")
         if type(self) != type(other):
@@ -393,16 +401,16 @@ def create_action(action_name, attributes, constraint_dict, sub_actions = None, 
         return res
 
 
-    def __repr__(self):
-        pars = "({})".format(', '.join([str(getattr(self, attr)) for attr, _ in attributes if attr != "time"]))
-        if hasattr(self, "time"):
-            time_s = "@{time} {action_name}".format(time = self.time, action_name = action_name)
-        else:
-            time_s = ""
-        return time_s+pars
+    # def __repr__(self):
+    #     pars = "({})".format(', '.join([str(getattr(self, attr)) for attr, _ in attributes if attr != "time"]))
+    #     if hasattr(self, "time"):
+    #         time_s = "@{time} {action_name}".format(time = self.time, action_name = action_name)
+    #     else:
+    #         time_s = ""
+    #     return time_s+pars
 
     def print_with_context(self, context_map):
-        interests = context_map.get(type(self), set())
+        interests = context_map.get(type(self), OrderedSet())
         important_args = ["?{}:Nat".format(getattr(self, attr) ) for attr, _ in attributes if attr in interests]
         content = (' '.join(important_args)) if len(important_args) > 0 else  "..."
         pars = "{action_name} {content}".format(action_name = action_name.upper()   , content = content)
@@ -469,12 +477,12 @@ def create_action(action_name, attributes, constraint_dict, sub_actions = None, 
         "under_approx_counter": 0,
         "under_approx_vars": under_approx_vars,
         "collect_list" : [],
-        "temp_collection_set": set(),
+        "temp_collection_set": OrderedSet(),
         "syn_collect_list": [],
         "additional_constraint" : [],
         "snap_shot":[],
-        "EQ_CLASS" : [set()],
-        "Uncollected" : set(),
+        "EQ_CLASS" : [OrderedSet()],
+        "Uncollected" : OrderedSet(),
         "__init__": __init__,
         "get_index_update": get_index_update,
         "make_permanent": make_permanent,
@@ -482,7 +490,8 @@ def create_action(action_name, attributes, constraint_dict, sub_actions = None, 
         "sym_subs": sym_subs,
         "context_dependent_variable": context_dependent_variable,
         "get_all_variables": get_all_variables,
-        "__repr__": __repr__,
+        # # "__repr__": __repr__,
+        # "__hash__": __hash__,
         "print_with_context": print_with_context,
         "extract_mentioned_attributes": extract_mentioned_attributes,
         "get_record": get_record,
