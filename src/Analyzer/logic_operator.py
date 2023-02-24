@@ -1643,7 +1643,7 @@ class _SUMObject(Action):
                             under_starting += under_ite_result
 
                         self.encoded_actions[action] = cond, neg_cond, ite_result, under_ite_result
-                        considered.add(action)
+                    considered.add(action)
                     # print("res cond {}".format(serialize(res_cond)))
                     # neg_res_cond = encode(neg_cond, assumption=assumption, include_new_act=include_new_act, exception=exception,
                     # #                disable=disable)
@@ -2238,7 +2238,7 @@ def next_sum(s, action):
             connect_term = (child_sum + value1) >= s.value
         else:
             assert False
-        return AND(s.filter_func.evaulate(action), s.value_func.evaulate(action) > Int(0),
+        return AND(s.filter_func.evaulate(action), value1 > Int(0),
                    connect_term,
                    Equals(s.time, action.time)
 
@@ -2283,12 +2283,11 @@ def next_bcr_sum(s, action):
             connect_term = (child_sum + value1) >= s.value
         else:
             assert False
-        return AND(s.filter_func.evaulate(action), s.value_func.evaulate(action) > Int(0),
+        return AND(s.filter_func.evaulate(action), value1 > Int(0),
                    connect_term,
                    Equals(s.time, action.time),
                    forall(s.input_type, lambda other: Implication(s.filter_func.evaulate(other),
-                                                                  s.value_func.evaulate(other) <= s.value_func.evaulate(
-                                                                      action)))
+                                                                  s.value_func.evaulate(other) <= value1))
                    )
 
 
